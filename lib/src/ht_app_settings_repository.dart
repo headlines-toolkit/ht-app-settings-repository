@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ht_app_settings_client/ht_app_settings_client.dart';
+import 'package:ht_shared/ht_shared.dart';
 import 'package:meta/meta.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -76,7 +77,7 @@ class HtAppSettingsRepository {
   /// Note: Prefer using [watchDisplaySettings] for reactive updates or
   /// [currentDisplaySettings] for the latest cached value.
   ///
-  /// Rethrows any exceptions encountered by the underlying client.
+  /// Throws [HtHttpException] or its subtypes on failure.
   Future<DisplaySettings> getDisplaySettings() async {
     // Although we have the stream, this method directly mirrors the client
     // API for potentially fetching the absolute latest from the source.
@@ -87,7 +88,7 @@ class HtAppSettingsRepository {
 
   /// Saves the provided [DisplaySettings] using the client and updates the stream.
   ///
-  /// Rethrows any exceptions encountered by the underlying client.
+  /// Throws [HtHttpException] or its subtypes on failure.
   Future<void> setDisplaySettings(DisplaySettings settings) async {
     await _client.setDisplaySettings(settings);
     _displaySettingsSubject.add(settings);
@@ -98,7 +99,7 @@ class HtAppSettingsRepository {
   /// Note: Prefer using [watchLanguage] for reactive updates or
   /// [currentLanguage] for the latest cached value.
   ///
-  /// Rethrows any exceptions encountered by the underlying client.
+  /// Throws [HtHttpException] or its subtypes on failure.
   Future<AppLanguage> getLanguage() async {
     // Mirrors the client API, similar to getDisplaySettings.
     final language = await _client.getLanguage();
@@ -108,7 +109,7 @@ class HtAppSettingsRepository {
 
   /// Saves the provided [AppLanguage] using the client and updates the stream.
   ///
-  /// Rethrows any exceptions encountered by the underlying client.
+  /// Throws [HtHttpException] or its subtypes on failure.
   Future<void> setLanguage(AppLanguage language) async {
     await _client.setLanguage(language);
     _languageSubject.add(language);
@@ -116,7 +117,7 @@ class HtAppSettingsRepository {
 
   /// Clears all settings to their defaults using the client and updates streams.
   ///
-  /// Rethrows any exceptions encountered by the underlying client.
+  /// Throws [HtHttpException] or its subtypes on failure.
   Future<void> clearSettings() async {
     await _client.clearSettings();
     // Re-fetch the (now default) settings to update the streams
