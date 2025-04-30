@@ -1,5 +1,5 @@
 name: ht_app_settings_repository
-description: ...
+description: A repository package for managing application settings (theme, language) built upon ht_app_settings_client.
 repository: https://github.com/headlines-toolkit/ht-app-settings-repository
 publish_to: none
 
@@ -10,6 +10,8 @@ dependencies:
   ht_app_settings_client:
     git:
       url: https://github.com/headlines-toolkit/ht-app-settings-client.git
+  meta: ^1.16.0
+  rxdart: ^0.28.0
 
 dev_dependencies:
   mocktail: ^1.0.4
