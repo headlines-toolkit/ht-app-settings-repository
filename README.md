@@ -74,4 +74,4 @@ void main() async {
 
 ## License
 
-This package is licensed under the [PolyForm Free Trial 1.0.0](LICENSE). Please review the terms before use. (Note: You may need to add a `LICENSE` file to the repository root containing the actual license text).
+This package is licensed under the [PolyForm Free Trial 1.0.0](LICENSE). Please review the terms before use.
