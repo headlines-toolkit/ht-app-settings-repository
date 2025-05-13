@@ -37,17 +37,19 @@ void main() {
     // Default values for testing
     const defaultSettings = DisplaySettings();
     const defaultLanguage = 'en'; // Assuming 'en' is a sensible default
+    const testUserId = 'test_user_id';
 
     setUp(() {
       mockClient = MockHtAppSettingsClient();
 
       // Stub initial calls from constructor -> _initializeStreams
-      when(() => mockClient.getDisplaySettings())
+      when(() => mockClient.getDisplaySettings(userId: testUserId))
           .thenAnswer((_) async => defaultSettings);
-      when(() => mockClient.getLanguage())
+      when(() => mockClient.getLanguage(userId: testUserId))
           .thenAnswer((_) async => defaultLanguage);
 
-      repository = HtAppSettingsRepository(client: mockClient);
+      repository =
+          HtAppSettingsRepository(client: mockClient, userId: testUserId);
     });
 
     tearDown(() {
@@ -60,8 +62,8 @@ void main() {
 
       expect(repository, isNotNull);
       // Verify initial fetches happened during setup
-      verify(() => mockClient.getDisplaySettings()).called(1);
-      verify(() => mockClient.getLanguage()).called(1);
+      verify(() => mockClient.getDisplaySettings(userId: testUserId)).called(1);
+      verify(() => mockClient.getLanguage(userId: testUserId)).called(1);
 
       // Check initial stream values
       expect(repository.watchDisplaySettings, emits(defaultSettings));
@@ -78,34 +80,48 @@ void main() {
 
       test('getDisplaySettings fetches from client and updates stream',
           () async {
-        when(() => mockClient.getDisplaySettings())
+        when(() => mockClient.getDisplaySettings(userId: testUserId))
             .thenAnswer((_) async => newSettings);
 
         final result = await repository.getDisplaySettings();
 
         expect(result, newSettings);
         // Called once during setup, once here
-        verify(() => mockClient.getDisplaySettings()).called(2);
+        verify(() => mockClient.getDisplaySettings(userId: testUserId))
+            .called(2);
         // Stream should emit the newly fetched value
         expect(repository.watchDisplaySettings, emits(newSettings));
         expect(repository.currentDisplaySettings, newSettings);
       });
 
       test('setDisplaySettings calls client and updates stream', () async {
-        when(() => mockClient.setDisplaySettings(newSettings))
-            .thenAnswer((_) async {});
+        when(
+          () => mockClient.setDisplaySettings(
+            userId: testUserId,
+            settings: newSettings,
+          ),
+        ).thenAnswer((_) async {});
 
         await repository.setDisplaySettings(newSettings);
 
-        verify(() => mockClient.setDisplaySettings(newSettings)).called(1);
+        verify(
+          () => mockClient.setDisplaySettings(
+            userId: testUserId,
+            settings: newSettings,
+          ),
+        ).called(1);
         expect(repository.watchDisplaySettings, emits(newSettings));
         expect(repository.currentDisplaySettings, newSettings);
       });
 
       test('setDisplaySettings propagates client exception', () async {
         final exception = Exception('Client failed to save settings');
-        when(() => mockClient.setDisplaySettings(newSettings))
-            .thenThrow(exception);
+        when(
+          () => mockClient.setDisplaySettings(
+            userId: testUserId,
+            settings: newSettings,
+          ),
+        ).thenThrow(exception);
 
         expect(
           () => repository.setDisplaySettings(newSettings),
@@ -120,32 +136,46 @@ void main() {
       const newLanguage = 'es';
 
       test('getLanguage fetches from client and updates stream', () async {
-        when(() => mockClient.getLanguage())
+        when(() => mockClient.getLanguage(userId: testUserId))
             .thenAnswer((_) async => newLanguage);
 
         final result = await repository.getLanguage();
 
         expect(result, newLanguage);
         // Called once during setup, once here
-        verify(() => mockClient.getLanguage()).called(2);
+        verify(() => mockClient.getLanguage(userId: testUserId)).called(2);
         expect(repository.watchLanguage, emits(newLanguage));
         expect(repository.currentLanguage, newLanguage);
       });
 
       test('setLanguage calls client and updates stream', () async {
-        when(() => mockClient.setLanguage(newLanguage))
-            .thenAnswer((_) async {});
+        when(
+          () => mockClient.setLanguage(
+            userId: testUserId,
+            language: newLanguage,
+          ),
+        ).thenAnswer((_) async {});
 
         await repository.setLanguage(newLanguage);
 
-        verify(() => mockClient.setLanguage(newLanguage)).called(1);
+        verify(
+          () => mockClient.setLanguage(
+            userId: testUserId,
+            language: newLanguage,
+          ),
+        ).called(1);
         expect(repository.watchLanguage, emits(newLanguage));
         expect(repository.currentLanguage, newLanguage);
       });
 
       test('setLanguage propagates client exception', () async {
         final exception = Exception('Client failed to save language');
-        when(() => mockClient.setLanguage(newLanguage)).thenThrow(exception);
+        when(
+          () => mockClient.setLanguage(
+            userId: testUserId,
+            language: newLanguage,
+          ),
+        ).thenThrow(exception);
 
         expect(
           () => repository.setLanguage(newLanguage),
@@ -160,7 +190,8 @@ void main() {
       test('calls client clear and re-initializes streams with defaults',
           () async {
         // Arrange: Stub clear and subsequent fetches for defaults
-        when(() => mockClient.clearSettings()).thenAnswer((_) async {});
+        when(() => mockClient.clearSettings(userId: testUserId))
+            .thenAnswer((_) async {});
         // Assume clear resets to these specific defaults
         final clearedSettings = FakeDisplaySettings(
           baseTheme: AppBaseTheme.system, // Example default
@@ -168,19 +199,20 @@ void main() {
         );
         const clearedLanguage = 'en'; // Example default
 
-        when(() => mockClient.getDisplaySettings())
+        when(() => mockClient.getDisplaySettings(userId: testUserId))
             .thenAnswer((_) async => clearedSettings);
-        when(() => mockClient.getLanguage())
+        when(() => mockClient.getLanguage(userId: testUserId))
             .thenAnswer((_) async => clearedLanguage);
 
         // Act
         await repository.clearSettings();
 
         // Assert
-        verify(() => mockClient.clearSettings()).called(1);
+        verify(() => mockClient.clearSettings(userId: testUserId)).called(1);
         // Verify it re-fetched after clearing (called once during setup too)
-        verify(() => mockClient.getDisplaySettings()).called(2);
-        verify(() => mockClient.getLanguage()).called(2);
+        verify(() => mockClient.getDisplaySettings(userId: testUserId))
+            .called(2);
+        verify(() => mockClient.getLanguage(userId: testUserId)).called(2);
 
         // Check streams emit the 'cleared' defaults
         expect(repository.watchDisplaySettings, emits(clearedSettings));
@@ -191,7 +223,8 @@ void main() {
 
       test('propagates client exception during clear', () async {
         final exception = Exception('Client failed to clear');
-        when(() => mockClient.clearSettings()).thenThrow(exception);
+        when(() => mockClient.clearSettings(userId: testUserId))
+            .thenThrow(exception);
 
         expect(() => repository.clearSettings(), throwsA(exception));
       });
@@ -216,12 +249,15 @@ void main() {
     test('initialization handles client errors gracefully', () async {
       // Arrange: Setup a new repository where initial fetches fail
       final failingClient = MockHtAppSettingsClient();
-      when(failingClient.getDisplaySettings)
+      when(() => failingClient.getDisplaySettings(userId: any(named: 'userId')))
           .thenThrow(Exception('Failed to get settings'));
-      when(failingClient.getLanguage)
+      when(() => failingClient.getLanguage(userId: any(named: 'userId')))
           .thenThrow(Exception('Failed to get language'));
 
-      final failingRepo = HtAppSettingsRepository(client: failingClient);
+      final failingRepo = HtAppSettingsRepository(
+        client: failingClient,
+        userId: 'another_user',
+      );
       // Wait for async initialization
       await Future<void>.delayed(Duration.zero);
 
