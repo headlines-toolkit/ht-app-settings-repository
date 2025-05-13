@@ -39,8 +39,11 @@ void main() async {
   // 1. Create a client instance (e.g., in-memory)
   final settingsClient = HtAppSettingsInMemory();
 
-  // 2. Create the repository instance, injecting the client
-  final settingsRepository = HtAppSettingsRepository(client: settingsClient);
+  // 2. Create the repository instance, injecting the client and providing a user ID
+  final settingsRepository = HtAppSettingsRepository(
+    client: settingsClient,
+    userId: 'test_user_id', // Replace with actual user ID
+  );
 
   // 3. Listen to streams
   final displaySub = settingsRepository.watchDisplaySettings.listen((settings) {
