@@ -19,12 +19,15 @@ class HtAppSettingsRepository {
   /// storage operations.
   HtAppSettingsRepository({
     required HtAppSettingsClient client,
-  }) : _client = client {
+    required String userId,
+  })  : _client = client,
+        _userId = userId {
     // Initialize streams with current values or defaults from the client.
     _initializeStreams();
   }
 
   final HtAppSettingsClient _client;
+  final String _userId;
 
   // BehaviorSubjects to hold and stream the latest settings values.
   // Using BehaviorSubject ensures new listeners get the current value immediately.
@@ -52,7 +55,7 @@ class HtAppSettingsRepository {
   // Initializes the streams by fetching initial values from the client.
   Future<void> _initializeStreams() async {
     try {
-      final initialSettings = await _client.getDisplaySettings();
+      final initialSettings = await _client.getDisplaySettings(userId: _userId);
       // Add only if the subject hasn't been closed (e.g., by dispose)
       if (!_displaySettingsSubject.isClosed) {
         _displaySettingsSubject.add(initialSettings);
@@ -61,7 +64,7 @@ class HtAppSettingsRepository {
       // Keep seeded default if fetch fails. Log error in real app.
     }
     try {
-      final initialLanguage = await _client.getLanguage();
+      final initialLanguage = await _client.getLanguage(userId: _userId);
       // Add only if the subject hasn't been closed
       if (!_languageSubject.isClosed) {
         _languageSubject.add(initialLanguage);
@@ -81,7 +84,7 @@ class HtAppSettingsRepository {
   Future<DisplaySettings> getDisplaySettings() async {
     // Although we have the stream, this method directly mirrors the client
     // API for potentially fetching the absolute latest from the source.
-    final settings = await _client.getDisplaySettings();
+    final settings = await _client.getDisplaySettings(userId: _userId);
     _displaySettingsSubject.add(settings); // Update stream just in case
     return settings;
   }
@@ -90,7 +93,7 @@ class HtAppSettingsRepository {
   ///
   /// Throws [HtHttpException] or its subtypes on failure.
   Future<void> setDisplaySettings(DisplaySettings settings) async {
-    await _client.setDisplaySettings(settings);
+    await _client.setDisplaySettings(userId: _userId, settings: settings);
     _displaySettingsSubject.add(settings);
   }
 
@@ -102,7 +105,7 @@ class HtAppSettingsRepository {
   /// Throws [HtHttpException] or its subtypes on failure.
   Future<AppLanguage> getLanguage() async {
     // Mirrors the client API, similar to getDisplaySettings.
-    final language = await _client.getLanguage();
+    final language = await _client.getLanguage(userId: _userId);
     _languageSubject.add(language); // Update stream
     return language;
   }
@@ -111,7 +114,7 @@ class HtAppSettingsRepository {
   ///
   /// Throws [HtHttpException] or its subtypes on failure.
   Future<void> setLanguage(AppLanguage language) async {
-    await _client.setLanguage(language);
+    await _client.setLanguage(userId: _userId, language: language);
     _languageSubject.add(language);
   }
 
@@ -119,7 +122,7 @@ class HtAppSettingsRepository {
   ///
   /// Throws [HtHttpException] or its subtypes on failure.
   Future<void> clearSettings() async {
-    await _client.clearSettings();
+    await _client.clearSettings(userId: _userId);
     // Re-fetch the (now default) settings to update the streams
     await _initializeStreams();
   }
